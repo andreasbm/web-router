@@ -43,6 +43,7 @@ export default class UserComponent extends LitElement {
 			<p>:user = <b>${user}</b></p>
 			<p>:dashId = <b>${dashId}</b></p>
 			<router-link path="edit">Go to EditComponent</router-link>
+			<router-link path="edit" target="_blank">Open EditComponent in New Tab</router-link>
 			<router-slot @changestate="${(e: Event) => console.log("State changed", e)}"></router-slot>
 		`;
 	}

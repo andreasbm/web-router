@@ -4,7 +4,6 @@
  */
 export function ensureAnchorHistory () {
 	window.addEventListener("click", (e: MouseEvent) => {
-
 		// Find the target by using the composed path to get the element through the shadow boundaries.
 		const $anchor = ("composedPath" in e as any) ? e.composedPath().find($elem => $elem instanceof HTMLAnchorElement) : e.target;
 
@@ -23,6 +22,12 @@ export function ensureAnchorHistory () {
 		if (!href.startsWith(location.origin) ||
 		   ($anchor.target !== "" && $anchor.target !== "_self") ||
 		   $anchor.dataset["routerSlot"] === "disabled") {
+			return;
+		}
+
+		// Holding down the metaKey (Command on Mac, Control on Windows)
+		// is used to open a link in a new tab so let the browser handle it
+		if (e.metaKey) {
 			return;
 		}
 
