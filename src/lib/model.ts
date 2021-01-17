@@ -11,6 +11,8 @@ export interface IRouterSlot<D = any, P = any> extends HTMLElement {
 	constructAbsolutePath: ((path: PathFragment) => string);
 	parent: IRouterSlot<P> | null | undefined;
 	queryParentRouterSlot: (() => IRouterSlot<P> | null);
+	// Return the matched route if one found for the given path
+	getRouteMatch(path: string | PathFragment): IRouteMatch<D> | null;
 }
 
 export type IRoutingInfo<D = any, P = any> = {

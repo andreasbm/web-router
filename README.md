@@ -168,7 +168,7 @@ Go [`here`](https://developer.mozilla.org/en-US/docs/Web/API/History) to read mo
 
 #### Anchor element
 
-Normally an [`anchor element`](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/a) reloads the page when clicked. This library however changes the default behavior of all anchor element to use the history API instead.
+Normally an [`anchor element`](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/a) reloads the page when clicked. This library however changes the default behavior of all anchor element to use the history API if the router supports the route.
 
 ```html
 <a href="/home">Go to home!</a>

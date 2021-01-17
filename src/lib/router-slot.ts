@@ -1,15 +1,12 @@
 import { GLOBAL_ROUTER_EVENTS_TARGET, ROUTER_SLOT_TAG_NAME } from "./config";
 import { Cancel, EventListenerSubscription, GlobalRouterEvent, IPathFragments, IRoute, IRouteMatch, IRouterSlot, IRoutingInfo, Params, PathFragment, RouterSlotEvent } from "./model";
-import { addListener, constructAbsolutePath, dispatchGlobalRouterEvent, dispatchRouteChangeEvent, ensureAnchorHistory, ensureHistoryEvents, handleRedirect, isRedirectRoute, isResolverRoute, matchRoutes, pathWithoutBasePath, queryParentRouterSlot, removeListeners, resolvePageComponent, shouldNavigate } from "./util";
+import { addListener, AnchorHandler, constructAbsolutePath, dispatchGlobalRouterEvent, dispatchRouteChangeEvent, ensureHistoryEvents, handleRedirect, IAnchorHandler, isRedirectRoute, isResolverRoute, matchRoutes, pathWithoutBasePath, queryParentRouterSlot, removeListeners, resolvePageComponent, shouldNavigate } from "./util";
 
 const template = document.createElement("template");
 template.innerHTML = `<slot></slot>`;
 
 // Patches the history object and ensures the correct events.
 ensureHistoryEvents();
-
-// Ensure the anchor tags uses the history API
-ensureAnchorHistory();
 
 /**
  * Slot for a node in the router tree.
@@ -90,6 +87,11 @@ export class RouterSlot<D = any, P = any> extends HTMLElement implements IRouter
 	}
 
 	/**
+	 * The anchor link handler for the router slot
+	 */
+	private anchorHandler?: IAnchorHandler;
+
+	/**
 	 * Hooks up the element.
 	 */
 	constructor () {
@@ -107,6 +109,7 @@ export class RouterSlot<D = any, P = any> extends HTMLElement implements IRouter
 	 */
 	connectedCallback () {
 		this.parent = this.queryParentRouterSlot();
+		this.setupAnchorListener();
 	}
 
 	/**
@@ -114,6 +117,7 @@ export class RouterSlot<D = any, P = any> extends HTMLElement implements IRouter
 	 */
 	disconnectedCallback () {
 		this.detachListeners();
+		this.detachAnchorListener()
 	}
 
 	/**
@@ -156,6 +160,15 @@ export class RouterSlot<D = any, P = any> extends HTMLElement implements IRouter
 	}
 
 	/**
+	 * Return a route match for a given path or null if there's no match
+	 * @param path
+	 */
+	getRouteMatch(path: string | PathFragment): IRouteMatch<D> | null {
+		const match = matchRoutes(this._routes, path);
+		return match;
+	}
+
+	/**
 	 * Each time the path changes, load the new path.
 	 */
 	async render (): Promise<void> {
@@ -177,6 +190,22 @@ export class RouterSlot<D = any, P = any> extends HTMLElement implements IRouter
 
 		// Route to the path
 		await this.renderPath(pathFragment);
+	}
+
+	/**
+	 * Attach the anchor listener
+	 */
+	protected setupAnchorListener(): void {
+		// only bind the AnchorHandler to the root router
+		// otherwise, we get multiple click handlers,
+		// each responding to a different router
+		if (!this.isRoot) return;
+		this.anchorHandler = new AnchorHandler(this);
+		this.anchorHandler?.setup();
+	}
+
+	protected detachAnchorListener(): void {
+		this.anchorHandler?.teardown();
 	}
 
 	/**
@@ -219,7 +248,7 @@ export class RouterSlot<D = any, P = any> extends HTMLElement implements IRouter
 	protected async renderPath (path: string | PathFragment): Promise<boolean> {
 
 		// Find the corresponding route.
-		const match = matchRoutes(this._routes, path);
+		const match = this.getRouteMatch(path);
 
 		// Ensure that a route was found, otherwise we just clear the current state of the route.
 		if (match == null) {
